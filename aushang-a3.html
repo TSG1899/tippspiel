@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=Hanken+Grotesk:wght@400..800&display=swap">
+<style>
+  @page{size:A3;margin:0}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{
+    width:297mm;height:420mm;overflow:hidden;position:relative;
+    font-family:'Mundial','Hanken Grotesk',system-ui,sans-serif;color:#fff;
+    background:#222b54 url(hintergrund.jpg) center/cover no-repeat;
+  }
+  .schleier{position:absolute;inset:0;
+    background:linear-gradient(180deg, rgba(13,35,78,.80) 0%, rgba(13,35,78,.34) 34%, rgba(13,35,78,.34) 60%, rgba(13,35,78,.90) 100%)}
+  /* Winkelflaeche: klein genug, dass die Fusszeile frei bleibt */
+  .ecke{position:absolute;right:0;bottom:0;width:110.31mm;height:87.68mm;
+    background:#004f9f;clip-path:polygon(100% 0,100% 100%,0 100%)}
+  .inhalt{position:relative;height:100%;display:flex;flex-direction:column;
+    align-items:center;padding:19.799mm 22.627mm 18.385mm;text-align:center}
+
+  .kicker{font-family:'Herokid','Archivo',Arial,sans-serif;font-style:italic;font-weight:700;font-stretch:80%;
+    text-transform:uppercase;letter-spacing:.17em;font-size:14.849pt;color:#8fd4e4;margin-bottom:7.071mm}
+  h1{font-family:'Herokid','Archivo','Arial Narrow',Arial,sans-serif;font-style:italic;font-weight:900;
+    font-stretch:72%;text-transform:uppercase;font-size:84.852pt;line-height:.88;letter-spacing:.005em}
+
+  .paarung{display:flex;align-items:center;justify-content:center;gap:18.385mm;margin-top:15.556mm;margin-bottom:32.527mm}
+  .wappen{width:39.598mm;height:39.598mm;display:grid;place-items:center}
+  .wappen img{height:100%;width:auto;max-width:100%;object-fit:contain}
+  .vs{font-family:'Herokid','Archivo',Arial,sans-serif;font-style:italic;font-weight:900;font-stretch:70%;
+    font-size:29.698pt;color:#8fd4e4}
+
+  .qrfeld{background:#fff;padding:9.8994mm;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 12.728mm),calc(100% - 11.314mm) 100%,0 100%)}
+  .qrfeld img{width:118.79mm;height:118.79mm;display:block}
+
+  .schluss{margin-top:auto;padding-top:11.314mm;max-width:186.67mm;margin-bottom:22.627mm}
+  .gewinn{font-family:'Herokid','Archivo',Arial,sans-serif;font-style:italic;font-weight:900;font-stretch:78%;
+    text-transform:uppercase;font-size:17.677pt;margin-bottom:7.071mm;letter-spacing:.03em;line-height:1.2}
+  .zeile{font-size:15.556pt;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+  .zeile b{font-family:'Herokid','Archivo',Arial,sans-serif;font-style:italic;font-weight:900;
+    font-stretch:78%;font-size:24.041pt;letter-spacing:.02em;color:#8fd4e4;
+    display:block;margin-top:2.8284mm;white-space:nowrap;text-transform:none}
+</style></head>
+<body>
+  <div class="schleier"></div>
+  <div class="ecke"></div>
+  <div class="inhalt">
+    <p class="kicker" id="c-wettbewerb">UEFA Europa League &middot; Ligaphase</p>
+    <h1>Tippe den<br>Endstand</h1>
+
+    <div class="paarung">
+      <div class="wappen"><img id="c-wappen-heim" src="tsg-wappen.png" alt=""></div>
+      <div class="vs">VS</div>
+      <div class="wappen"><img id="c-wappen-gast" src="ol-wappen.png" alt=""></div>
+    </div>
+
+    <div class="qrfeld">
+      <img src="qr.png" alt="QR-Code zum Tippspiel">
+    </div>
+
+    <div class="schluss">
+      <p class="gewinn" id="c-gewinn">1&times; Europa-League-Trikot mit Wunschflock</p>
+      <p class="zeile">Einsendeschluss<b id="c-schluss">Do, 22.10.2026, 21:00 Uhr</b></p>
+    </div>
+  </div>
+
+<style>
+  .druckleiste{
+    position:fixed;top:0;left:0;right:0;z-index:99;
+    background:#05376e;color:#fff;padding:10px 16px;
+    font-family:'Hanken Grotesk',system-ui,sans-serif;font-size:14px;
+    display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+  }
+  .druckleiste b{font-weight:700}
+  .druckleiste button{
+    font:inherit;font-weight:700;cursor:pointer;border:0;
+    background:#41bed2;color:#05376e;padding:8px 16px;
+  }
+  .druckleiste a{color:#8fd4e4}
+  body{padding-top:0}
+  @media print{ .druckleiste{display:none !important} }
+</style>
+<div class="druckleiste">
+  <b>Aushang A3</b>
+  <span>Strg+P, Ziel "Als PDF speichern", Größe A3, Ränder "Keine", Hintergrundgrafiken an.</span>
+  <button onclick="window.print()">Drucken</button>
+  <span id="ladestatus"></span>
+</div>
+
+<script>
+(function(){
+  var ENDPOINT = 'https://script.google.com/macros/s/AKfycbxmk6XW6-ulGS0quY0vF9VlCTz0bc1ckSYR53eFf8BTJqkRuZ39AFmLkgV5dE6U1VPnEw/exec';
+  var el = function(id){ return document.getElementById(id); };
+
+  function setzen(id, wert){ var e = el(id); if (e && wert) e.textContent = wert; }
+
+  function anwenden(k){
+    if (!k){ el('ladestatus').textContent = 'Konfiguration nicht erreichbar, Standardwerte angezeigt.'; return; }
+    setzen('c-wettbewerb', k.Wettbewerb);
+    setzen('c-gewinn', k.Gewinn);
+
+    var heim = (String(k.Heimspiel || 'ja').toLowerCase() !== 'nein');
+    var wTsg = 'tsg-wappen.png';
+    var wGeg = k.GegnerWappen || 'ol-wappen.png';
+    el('c-wappen-heim').src = heim ? wTsg : wGeg;
+    el('c-wappen-gast').src = heim ? wGeg : wTsg;
+    el('c-wappen-heim').alt = 'Wappen ' + (heim ? 'TSG Hoffenheim' : (k.Gegner || ''));
+    el('c-wappen-gast').alt = 'Wappen ' + (heim ? (k.Gegner || '') : 'TSG Hoffenheim');
+
+    var s = String(k.Einsendeschluss || '').trim();
+    if (s){
+      var teile = s.split(' ');
+      var d = teile[0].split('-');
+      if (d.length === 3){
+        var wt = ['So','Mo','Di','Mi','Do','Fr','Sa'][new Date(teile[0]+'T12:00:00').getDay()];
+        setzen('c-schluss', wt + ', ' + d[2] + '.' + d[1] + '.' + d[0] + ', ' + (teile[1]||'') + ' Uhr');
+      }
+    }
+    el('ladestatus').textContent = 'Konfiguration geladen.';
+  }
+
+  function laden(fertig){
+    if (!ENDPOINT){ fertig(null); return; }
+    var fertigGemeldet = false;
+    var schluss = function(k){ if(!fertigGemeldet){ fertigGemeldet = true; fertig(k); } };
+    fetch(ENDPOINT).then(function(a){ return a.json(); })
+      .then(function(d){ schluss(d && d.konfiguration ? d.konfiguration : null); })
+      .catch(function(){
+        var n = 'tsgK' + Date.now();
+        window[n] = function(d){ schluss(d && d.konfiguration ? d.konfiguration : null); };
+        var sk = document.createElement('script');
+        sk.src = ENDPOINT + (ENDPOINT.indexOf('?')>-1?'&':'?') + 'callback=' + n;
+        sk.onerror = function(){ schluss(null); };
+        document.body.appendChild(sk);
+      });
+    setTimeout(function(){ schluss(null); }, 6000);
+  }
+
+  laden(anwenden);
+})();
+</script>
+
+</body></html>

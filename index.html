@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TSG-Tippspiel Lyon</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=Hanken+Grotesk:ital,wght@0,400..800;1,400..700&display=swap">
+<style>
+  /* Layout: Nachtblau-Grund mit 40,25°-Winkel im Header, darunter eine weisse Formularkarte in einer Spalte */
+  :root{
+    --nachtblau:#05376e;
+    --hoffe:#0a4baf;
+    --energie:#41bed2;
+    --weiss:#ffffff;
+    --papier:#f2f5fa;
+    --linie:#d3deee;
+    --text:#0b2a4d;
+    --font-display:'Herokid','Archivo','Arial Narrow',Arial,sans-serif;
+    --font-body:'Mundial','Hanken Grotesk','Avenir Next',Avenir,'Segoe UI',system-ui,sans-serif;
+    color-scheme:light;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:var(--font-body);
+    background:
+      repeating-linear-gradient(130.25deg, rgba(10,75,175,.30) 0 2px, transparent 2px 54px),
+      var(--nachtblau);
+    color:var(--nachtblau);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{
+    max-width:760px;
+    margin:0 auto;
+    padding-left:max(16px, env(safe-area-inset-left, 0px));
+    padding-right:max(16px, env(safe-area-inset-right, 0px));
+    padding-block:28px 56px;
+  }
+
+  /* ---------- Winkel-Schnitt (40,25°-Anmutung) ---------- */
+  .cut{clip-path:polygon(0 0, 100% 0, 100% calc(100% - 30px), calc(100% - 26px) 100%, 0 100%)}
+  .cut-tl{clip-path:polygon(26px 0, 100% 0, 100% 100%, 0 100%, 0 30px)}
+
+  /* ---------- Kopf ---------- */
+  .hero{
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(49.75deg, var(--nachtblau) 0 48%, var(--hoffe) 48% 100%);
+    color:var(--weiss);
+    padding:26px 24px 28px;
+  }
+  .kicker{
+    font-family:var(--font-display);
+    font-style:italic;
+    font-weight:700;
+    font-stretch:80%;
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    font-size:.72rem;
+    color:var(--energie);
+    margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--font-display);
+    font-style:italic;
+    font-weight:900;
+    font-stretch:75%;
+    font-size:clamp(2.1rem,8vw,3.4rem);
+    line-height:.95;
+    margin:0;
+    text-wrap:balance;
+  }
+  .hero p.lead{
+    font-size:.98rem;
+    line-height:1.5;
+    margin:14px 0 0;
+    max-width:46ch;
+    color:rgba(255,255,255,.88);
+  }
+
+  /* ---------- Paarung ---------- */
+  .match{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    align-items:center;
+    gap:14px;
+    margin-top:24px;
+    padding-top:22px;
+    border-top:1px solid rgba(255,255,255,.22);
+  }
+  .team{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;min-width:0}
+  .crest{
+    width:104px;height:104px;
+    display:grid;place-items:center;
+    background:var(--weiss);
+    padding:16px;                 /* Schutzzone */
+    clip-path:polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 18px) 100%, 0 100%);
+  }
+  .crest img{display:block;height:100%;width:auto;max-width:100%;object-fit:contain}
+  .team span{
+    font-family:var(--font-display);
+    font-style:italic;font-weight:700;font-stretch:80%;
+    text-transform:uppercase;letter-spacing:.04em;
+    font-size:.92rem;
+  }
+  .vs{
+    font-family:var(--font-display);
+    font-style:italic;font-weight:900;font-stretch:70%;
+    font-size:1.5rem;color:var(--energie);
+  }
+  .anstoss{
+    margin-top:18px;
+    display:flex;flex-wrap:wrap;gap:8px;
+  }
+  .chip{
+    font-size:.74rem;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    font-weight:700;
+    padding:7px 12px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.24);
+  }
+
+  /* ---------- Gewinn-Band ---------- */
+  .preis{
+    background:var(--energie);
+    color:var(--nachtblau);
+    padding:18px 24px;
+    display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;
+  }
+  .preis h2{
+    font-family:var(--font-display);
+    font-style:italic;font-weight:900;font-stretch:78%;
+    text-transform:uppercase;letter-spacing:.03em;
+    font-size:1.15rem;margin:0 0 4px;
+  }
+  .preis p{margin:0;font-size:.9rem;line-height:1.45;max-width:52ch}
+  .preis .num{
+    font-family:var(--font-display);
+    font-style:italic;font-weight:900;font-stretch:70%;
+    font-size:2.4rem;line-height:1;
+  }
+
+  /* ---------- Karte ---------- */
+  .karte{
+    background:var(--weiss);
+    padding:28px 24px 32px;
+  }
+  .countdown{
+    display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+    font-size:.82rem;letter-spacing:.05em;text-transform:uppercase;font-weight:700;
+    color:var(--hoffe);
+    margin:0 0 24px;
+  }
+  .countdown b{
+    font-family:var(--font-display);
+    font-style:italic;font-weight:900;font-stretch:78%;
+    font-size:1.15rem;letter-spacing:.02em;
+    font-variant-numeric:tabular-nums;
+  }
+
+  fieldset{border:0;margin:0 0 28px;padding:0}
+  legend{
+    font-family:var(--font-display);
+    font-style:italic;font-weight:700;font-stretch:80%;
+    text-transform:uppercase;letter-spacing:.07em;
+    font-size:.8rem;color:var(--hoffe);
+    padding:0 0 10px;
+  }
+  .hinweis{font-size:.82rem;line-height:1.5;color:#4a648a;margin:0 0 14px}
+
+  label.feld{display:block;margin-bottom:16px}
+  label.feld > span{
+    display:block;font-size:.84rem;font-weight:700;margin-bottom:6px;
+  }
+  .pflicht{color:var(--hoffe)}
+  input[type=text], input[type=email]{
+    width:100%;
+    font:inherit;
+    padding:12px 14px;
+    background:var(--papier);
+    border:1.5px solid var(--linie);
+    border-radius:0;
+    color:var(--nachtblau);
+  }
+  input[type=number]{
+    width:100%;
+    font-family:var(--font-display);
+    font-style:italic;font-weight:900;font-stretch:78%;
+    font-size:2.6rem;
+    text-align:center;
+    padding:10px 4px;
+    background:var(--papier);
+    border:1.5px solid var(--linie);
+    border-radius:0;
+    color:var(--hoffe);
+    font-variant-numeric:tabular-nums;
+  }
+  input:focus-visible, button:focus-visible, .consent:focus-within{
+    outline:3px solid var(--energie);
+    outline-offset:2px;
+  }
+
+  .tipp{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    align-items:end;
+    gap:12px;
+  }
+  .tipp .doppel{
+    font-family:var(--font-display);
+    font-style:italic;font-weight:900;
+    font-size:2rem;color:var(--linie);
+    padding-bottom:14px;
+  }
+  .tipp .tname{
+    display:block;text-align:center;
+    font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;
+    font-weight:700;margin-bottom:6px;color:var(--nachtblau);
+  }
+
+  .consent{
+    display:flex;gap:12px;align-items:flex-start;
+    background:var(--papier);
+    border-left:5px solid var(--hoffe);
+    padding:16px;
+  }
+  .consent input{margin:3px 0 0;width:18px;height:18px;accent-color:var(--hoffe);flex:none}
+  .consent div{font-size:.8rem;line-height:1.5;min-width:0}
+  .consent strong{display:block;margin-bottom:5px;font-size:.84rem}
+  .freiwillig{
+    display:inline-block;margin-top:8px;
+    font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;font-weight:800;
+    color:var(--hoffe);
+  }
+
+  .honey{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+
+  button.senden{
+    font-family:var(--font-display);
+    font-style:italic;font-weight:900;font-stretch:78%;
+    text-transform:uppercase;letter-spacing:.05em;
+    font-size:1.15rem;
+    color:var(--weiss);
+    background:var(--hoffe);
+    border:0;
+    padding:17px 30px;
+    width:100%;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  button.senden:hover{background:var(--nachtblau)}
+  button.senden[disabled]{background:#8fa6c8;cursor:progress}
+
+  details{
+    border-top:1px solid var(--linie);
+    padding:14px 0 2px;
+  }
+  details summary{
+    cursor:pointer;
+    font-family:var(--font-display);
+    font-style:italic;font-weight:700;font-stretch:80%;
+    text-transform:uppercase;letter-spacing:.06em;
+    font-size:.78rem;color:var(--hoffe);
+  }
+  details p, details li{font-size:.78rem;line-height:1.6;color:#44628c}
+  details a{color:var(--hoffe);font-weight:700}
+  details ul{padding-left:18px;margin:10px 0}
+
+  .danke{
+    background:var(--weiss);
+    padding:40px 24px;
+    text-align:center;
+  }
+  .danke h2{
+    font-family:var(--font-display);
+    font-style:italic;font-weight:900;font-stretch:75%;
+    text-transform:uppercase;
+    font-size:2rem;margin:0 0 12px;color:var(--hoffe);
+  }
+  .danke p{font-size:.92rem;line-height:1.55;margin:0 auto;max-width:44ch}
+  .nlbtn{
+    display:inline-block;margin-top:22px;
+    font-family:var(--font-display);
+    font-style:italic;font-weight:900;font-stretch:78%;
+    text-transform:uppercase;letter-spacing:.05em;font-size:.95rem;
+    color:var(--weiss);background:var(--hoffe);
+    padding:14px 26px;text-decoration:none;
+  }
+  .nlbtn:hover{background:var(--nachtblau)}
+
+  .danke .score{
+    font-family:var(--font-display);
+    font-style:italic;font-weight:900;font-stretch:72%;
+    font-size:3.4rem;color:var(--nachtblau);margin:18px 0 6px;
+    font-variant-numeric:tabular-nums;
+  }
+
+  footer{
+    color:rgba(255,255,255,.62);
+    font-size:.72rem;
+    line-height:1.6;
+    padding:20px 4px 0;
+  }
+  footer a{color:var(--energie)}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero cut">
+    <p class="kicker" id="c-wettbewerb">UEFA Europa League · Ligaphase</p>
+    <h1>Tippe den<br>Endstand</h1>
+    <p class="lead" id="c-intro">Wer trifft das Ergebnis? Unter allen richtigen Tipps verlosen wir den Gewinn.</p>
+
+    <div class="match" id="c-match">
+      <div class="team" id="c-team-heim">
+        <div class="crest"><img id="c-wappen-heim" src="tsg-wappen.png" alt=""></div>
+        <span id="c-name-heim">TSG Hoffenheim</span>
+      </div>
+      <div class="vs">VS</div>
+      <div class="team" id="c-team-gast">
+        <div class="crest"><img id="c-wappen-gast" src="ol-wappen.png" alt=""></div>
+        <span id="c-name-gast">Olympique Lyon</span>
+      </div>
+    </div>
+
+    <div class="anstoss">
+      <span class="chip" id="c-datum">Do, 22.10.2026</span>
+      <span class="chip" id="c-anstoss">21:00 Uhr</span>
+      <span class="chip" id="c-stadion">SNP Arena</span>
+    </div>
+  </header>
+
+  <section class="preis">
+    <div class="num">1×</div>
+    <div>
+      <h2 id="c-gewinn">Europa-League-Trikot mit Wunschflock</h2>
+      <p>Name und Rückennummer wählt die Gewinnerin oder der Gewinner nach der Auslosung selbst aus. Wir stimmen den Flock per E-Mail ab und schicken das Trikot anschließend zu.</p>
+    </div>
+  </section>
+
+  <div class="karte cut" id="formkarte">
+    <p class="countdown">Einsendeschluss <b id="cd">Do, 22.10., 21:00 Uhr</b></p>
+
+    <form id="tippform" novalidate>
+
+      <fieldset>
+        <legend>1 · Dein Tipp</legend>
+        <p class="hinweis">Endstand nach 90 Minuten, ohne Verlängerung.</p>
+        <div class="tipp">
+          <div>
+            <span class="tname" id="c-tipp-heim">TSG Hoffenheim</span>
+            <input type="number" id="tore-tsg" name="tore-tsg" min="0" max="20" inputmode="numeric" placeholder="0" required>
+          </div>
+          <div class="doppel">:</div>
+          <div>
+            <span class="tname" id="c-tipp-gast">Olympique Lyon</span>
+            <input type="number" id="tore-geg" name="tore-geg" min="0" max="20" inputmode="numeric" placeholder="0" required>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>2 · Deine Kontaktdaten</legend>
+        <label class="feld">
+          <span>Vor- und Nachname <em class="pflicht">*</em></span>
+          <input type="text" id="name" name="name" autocomplete="name" required>
+        </label>
+        <label class="feld">
+          <span>E-Mail <em class="pflicht">*</em></span>
+          <input type="email" id="email" name="email" autocomplete="email" required>
+        </label>
+        <p class="hinweis">Die Gewinnerinnen und Gewinner werden im Nachgang per E-Mail benachrichtigt.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>3 · Einwilligung</legend>
+        <label class="consent">
+          <input type="checkbox" id="marketing" name="marketing">
+          <div>
+            <strong>Einwilligung in die Kontaktaufnahme zu Marketingzwecken</strong>
+            Ich willige ein, dass die TSG Hoffenheim Fußball-Spielbetriebs GmbH meine im Rahmen des Gewinnspiels angegebenen Kontaktdaten (Vor- und Nachname, E-Mail-Adresse) verwendet, um mich per E-Mail über eigene Angebote der TSG Hoffenheim zu informieren. Dies umfasst insbesondere Informationen zu Tageskarten, Dauerkarten, VIP-Angeboten, Hospitality-Leistungen und sonstigen Veranstaltungen der TSG Hoffenheim. Die Einwilligung ist freiwillig und kann jederzeit mit Wirkung für die Zukunft widerrufen werden, z. B. per E-Mail an heimspiel@tsg-hoffenheim.de.
+            <span class="freiwillig">Freiwillig · keine Voraussetzung für die Teilnahme</span>
+          </div>
+        </label>
+      </fieldset>
+
+      <div class="honey" aria-hidden="true">
+        <label for="website">Bitte leer lassen</label>
+        <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+      </div>
+
+      <button type="submit" class="senden cut" id="sendbtn">Tipp abgeben</button>
+    </form>
+
+    <div style="height:28px"></div>
+
+    <details>
+      <summary>Teilnahmebedingungen</summary>
+      <ul>
+        <li>Pro Person ist nur eine Teilnahme möglich.</li>
+        <li>Unter allen Teilnehmenden, die den Endstand richtig getippt haben, werden die Gewinnerinnen und Gewinner ausgelost.</li>
+        <li>Die Gewinnerinnen und Gewinner werden nach Ablauf des Gewinnspiels per E-Mail informiert.</li>
+        <li>Der Rechtsweg ist ausgeschlossen.</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary>Hinweis zum Gewinn</summary>
+      <p>Der Gewinn umfasst ein Trikot der aktuellen Europa-League-Kollektion in einer vom Gewinner gewählten Größe, geflockt mit einem frei wählbaren Namen und einer frei wählbaren Rückennummer. Nicht zulässig sind beleidigende, diskriminierende oder markenrechtlich geschützte Beflockungen. Die TSG Hoffenheim behält sich vor, eine Beflockung in diesen Fällen abzulehnen und mit dem Gewinner eine Alternative abzustimmen. Ist die gewünschte Größe nicht verfügbar, erhält der Gewinner einen nach Art und Wert gleichwertigen Ersatzgewinn, über dessen konkrete Gestaltung die TSG Hoffenheim das Einverständnis des Gewinners einholt. Eine Barauszahlung ist ausgeschlossen.</p>
+    </details>
+
+    <details>
+      <summary>Datenschutzhinweis</summary>
+      <p>Die im Rahmen des Gewinnspiels erhobenen personenbezogenen Daten werden ausschließlich zur Durchführung des Gewinnspiels und zur Gewinnbenachrichtigung verarbeitet. Weitere Informationen zur Verarbeitung Ihrer personenbezogenen Daten finden Sie in den <a href="https://l.ead.me/bgf7hw" target="_blank" rel="noopener">Datenschutzinformationen zum Gewinnspiel</a>.</p>
+    </details>
+  </div>
+
+  <div class="danke cut" id="danke" hidden>
+    <h2>Tipp ist drin</h2>
+    <p class="score" id="dankescore">–:–</p>
+    <p id="danketext">Viel Glück! Wenn dein Tipp sitzt, melden wir uns nach dem Spiel per E-Mail.</p>
+    <p><a id="c-nl-button" class="nlbtn cut" href="#" target="_blank" rel="noopener" hidden>Zum TSG-Newsletter anmelden</a></p>
+  </div>
+
+  <div class="danke cut" id="vorbei" hidden>
+    <h2>Einsendeschluss vorbei</h2>
+    <p id="vorbeitext">Das Tippspiel ist geschlossen. Die Gewinnerinnen und Gewinner werden nach dem Spiel per E-Mail benachrichtigt.</p>
+  </div>
+
+  <footer>
+    TSG 1899 Hoffenheim Fußball-Spielbetriebs GmbH · Dietmar-Hopp-Sportpark · Horrenberger Straße 58 · 74939 Zuzenhausen<br>
+    Fragen zum Gewinnspiel: <a href="mailto:heimspiel@tsg-hoffenheim.de">heimspiel@tsg-hoffenheim.de</a>
+  </footer>
+</div>
+
+<script>
+(function(){
+
+  // =================================================================
+  // Diese eine Zeile verbindet die Seite mit deiner Google-Tabelle.
+  // =================================================================
+  var ENDPOINT = 'https://script.google.com/macros/s/AKfycbxmk6XW6-ulGS0quY0vF9VlCTz0bc1ckSYR53eFf8BTJqkRuZ39AFmLkgV5dE6U1VPnEw/exec';
+  // =================================================================
+
+  var K = {};                       // Konfiguration aus der Tabelle
+  var ZIEL = null;                  // Einsendeschluss als Zeitstempel
+  var el = function(id){ return document.getElementById(id); };
+
+  var form = el('tippform');
+  var btn  = el('sendbtn');
+  var cd   = el('cd');
+
+  /* ---------- Konfiguration laden ---------- */
+
+  function konfigLaden(fertig){
+    if (!ENDPOINT){ fertig(null); return; }
+
+    var erledigt = false;
+    var schluss = function(k){ if (!erledigt){ erledigt = true; fertig(k); } };
+
+    // Weg 1: direkter Abruf
+    fetch(ENDPOINT, { method:'GET' })
+      .then(function(a){ return a.json(); })
+      .then(function(d){ schluss(d && d.konfiguration ? d.konfiguration : null); })
+      .catch(function(){ jsonp(schluss); });
+
+    // Reißleine, falls gar nichts antwortet
+    setTimeout(function(){ schluss(null); }, 6000);
+  }
+
+  // Weg 2: Rückfallweg, falls der direkte Abruf blockiert wird
+  function jsonp(schluss){
+    var name = 'tsgKonfig' + Date.now();
+    window[name] = function(d){
+      schluss(d && d.konfiguration ? d.konfiguration : null);
+      try { delete window[name]; } catch(e) { window[name] = undefined; }
+    };
+    var sk = document.createElement('script');
+    sk.src = ENDPOINT + (ENDPOINT.indexOf('?') > -1 ? '&' : '?') + 'callback=' + name;
+    sk.onerror = function(){ schluss(null); };
+    document.body.appendChild(sk);
+  }
+
+  /* ---------- Konfiguration anwenden ---------- */
+
+  function setzen(id, wert){
+    var e = el(id);
+    if (e && wert) e.textContent = wert;
+  }
+
+  function anwenden(k){
+    K = k || {};
+
+    setzen('c-wettbewerb', K.Wettbewerb);
+    setzen('c-intro',      K.Intro);
+    setzen('c-datum',      K.Datum);
+    setzen('c-anstoss',    K.Anstoss);
+    setzen('c-stadion',    K.Stadion);
+    setzen('c-gewinn',     K.Gewinn);
+
+    var heim = (String(K.Heimspiel || 'ja').toLowerCase() !== 'nein');
+    var tsg  = 'TSG Hoffenheim';
+    var geg  = K.Gegner || el('c-name-gast').textContent;
+
+    // Bei Auswärtsspielen steht der Gegner links
+    setzen('c-name-heim', heim ? tsg : geg);
+    setzen('c-name-gast', heim ? geg : tsg);
+    setzen('c-tipp-heim', heim ? tsg : geg);
+    setzen('c-tipp-gast', heim ? geg : tsg);
+
+    var wTsg = 'tsg-wappen.png';
+    var wGeg = K.GegnerWappen || 'ol-wappen.png';
+    el('c-wappen-heim').src = heim ? wTsg : wGeg;
+    el('c-wappen-gast').src = heim ? wGeg : wTsg;
+    el('c-wappen-heim').alt = 'Wappen ' + (heim ? tsg : geg);
+    el('c-wappen-gast').alt = 'Wappen ' + (heim ? geg : tsg);
+
+    if (K.NewsletterLink){
+      var nl = el('c-nl-button');
+      nl.href = K.NewsletterLink;
+      nl.hidden = false;
+    }
+
+    ZIEL = zeitpunkt(K.Einsendeschluss);
+    if (String(K.Status || 'aktiv').toLowerCase() !== 'aktiv'){
+      schliessen('Das Tippspiel ist aktuell geschlossen.');
+      return;
+    }
+    tick();
+    setInterval(tick, 30000);
+  }
+
+  /* ---------- Einsendeschluss ---------- */
+
+  function zeitpunkt(text){
+    if (!text) return null;
+    var t = String(text).trim().replace(' ', 'T');
+    if (t.length === 16) t += ':00';
+    var d = new Date(t + '+01:00');                 // Winterzeit
+    if (isNaN(d.getTime())) d = new Date(t);
+    return isNaN(d.getTime()) ? null : d.getTime();
+  }
+
+  function abgelaufen(){ return ZIEL !== null && Date.now() >= ZIEL; }
+
+  function schliessen(text){
+    if (text) el('vorbeitext').textContent = text;
+    el('formkarte').hidden = true;
+    el('danke').hidden = true;
+    el('vorbei').hidden = false;
+  }
+
+  function tick(){
+    if (abgelaufen()){ schliessen(); return; }
+    if (ZIEL === null){ return; }
+    var rest = ZIEL - Date.now();
+    var t = Math.floor(rest/86400000),
+        h = Math.floor(rest/3600000)%24,
+        m = Math.floor(rest/60000)%60;
+    cd.textContent = (t>0 ? t+' Tage ' : '') + h + ' Std ' + m + ' Min';
+  }
+
+  /* ---------- Absenden ---------- */
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if (el('website').value !== '') return;          // Bot
+    if (abgelaufen()){ schliessen(); return; }
+
+    var a    = el('tore-tsg').value.trim();
+    var b    = el('tore-geg').value.trim();
+    var name = el('name').value.trim();
+    var mail = el('email').value.trim();
+    var ok   = el('marketing').checked;
+
+    if (a === '' || b === '' || name === '' || mail === ''){
+      meldung('Bitte Tipp, Name und E-Mail ausfüllen.');
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){
+      meldung('Diese E-Mail-Adresse sieht nicht richtig aus. Bitte prüfe sie kurz.');
+      return;
+    }
+    if (!ENDPOINT){ danke(a, b); return; }           // Vorschau ohne Verbindung
+
+    btn.disabled = true;
+    btn.textContent = 'Wird gesendet …';
+
+    var daten = new URLSearchParams({
+      name: name, email: mail,
+      toreTsg: a, toreGeg: b,
+      einwilligung: ok ? 'ja' : 'nein'
+    });
+
+    fetch(ENDPOINT, { method:'POST', mode:'no-cors', body: daten })
+      .then(function(){ danke(a, b); })
+      .catch(function(){
+        btn.disabled = false;
+        btn.textContent = 'Tipp abgeben';
+        meldung('Der Tipp konnte nicht gesendet werden. Bitte prüfe deine Verbindung und versuche es noch einmal.');
+      });
+  });
+
+  function danke(a, b){
+    el('dankescore').textContent = a + ':' + b;
+    el('formkarte').hidden = true;
+    el('danke').hidden = false;
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }
+
+  function meldung(text){
+    var e = el('fehler');
+    if (!e){
+      e = document.createElement('p');
+      e.id = 'fehler';
+      e.style.cssText = 'margin:14px 0 0;padding:12px 14px;background:#ffe9ee;border-left:5px solid #e6325a;font-size:.84rem;color:#8c1c35';
+      form.appendChild(e);
+    }
+    e.textContent = text;
+  }
+
+  /* ---------- Start ---------- */
+  konfigLaden(anwenden);
+
+})();
+</script>
+</body>
+</html>
