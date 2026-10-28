@@ -175,7 +175,7 @@
     display:block;font-size:.84rem;font-weight:700;margin-bottom:6px;
   }
   .pflicht{color:var(--hoffe)}
-  input[type=text], input[type=email]{
+  input[type=text], input[type=email], input[type=date]{
     width:100%;
     font:inherit;
     padding:12px 14px;
@@ -374,6 +374,10 @@
           <span>E-Mail <em class="pflicht">*</em></span>
           <input type="email" id="email" name="email" autocomplete="email" required>
         </label>
+        <label class="feld">
+          <span>Geburtsdatum <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></span>
+          <input type="date" id="geburtsdatum" name="geburtsdatum" autocomplete="bday" min="1900-01-01">
+        </label>
         <p class="hinweis">Die Gewinnerinnen und Gewinner werden im Nachgang per E-Mail benachrichtigt.</p>
       </fieldset>
 
@@ -383,7 +387,7 @@
           <input type="checkbox" id="marketing" name="marketing">
           <div>
             <strong>Einwilligung in die Kontaktaufnahme zu Marketingzwecken</strong>
-            Ich willige ein, dass die TSG Hoffenheim Fußball-Spielbetriebs GmbH meine im Rahmen des Gewinnspiels angegebenen Kontaktdaten (Vor- und Nachname, E-Mail-Adresse) verwendet, um mich per E-Mail über eigene Angebote der TSG Hoffenheim zu informieren. Dies umfasst insbesondere Informationen zu Tageskarten, Dauerkarten, VIP-Angeboten, Hospitality-Leistungen und sonstigen Veranstaltungen der TSG Hoffenheim. Die Einwilligung ist freiwillig und kann jederzeit mit Wirkung für die Zukunft widerrufen werden, z. B. per E-Mail an heimspiel@tsg-hoffenheim.de.
+            Ich willige ein, dass die TSG Hoffenheim Fußball-Spielbetriebs GmbH meine im Rahmen des Gewinnspiels angegebenen Kontaktdaten (Vor- und Nachname, E-Mail-Adresse, Geburtsdatum) verwendet, um mich per E-Mail über eigene Angebote der TSG Hoffenheim zu informieren. Dies umfasst insbesondere Informationen zu Tageskarten, Dauerkarten, VIP-Angeboten, Hospitality-Leistungen und sonstigen Veranstaltungen der TSG Hoffenheim. Die Einwilligung ist freiwillig und kann jederzeit mit Wirkung für die Zukunft widerrufen werden, z. B. per E-Mail an heimspiel@tsg-hoffenheim.de. Zur Bestätigung erhältst du eine E-Mail mit einem Link (Double-Opt-In). Erst nach deiner Bestätigung wirst du in den Verteiler aufgenommen.
             <span class="freiwillig">Freiwillig · keine Voraussetzung für die Teilnahme</span>
           </div>
         </label>
@@ -424,6 +428,7 @@
     <h2>Tipp ist drin</h2>
     <p class="score" id="dankescore">–:–</p>
     <p id="danketext">Viel Glück! Wenn dein Tipp sitzt, melden wir uns nach dem Spiel per E-Mail.</p>
+    <p id="doi" hidden><strong>Bitte prüfe dein Postfach.</strong> Wir haben dir eine E-Mail geschickt. Erst mit einem Klick auf den Link darin ist deine Newsletter-Anmeldung gültig. Schau auch im Spam-Ordner nach.</p>
     <p><a id="c-nl-button" class="nlbtn cut" href="#" target="_blank" rel="noopener" hidden>Zum TSG-Newsletter anmelden</a></p>
   </div>
 
@@ -517,6 +522,12 @@
     var wGeg = K.GegnerWappen || 'ol-wappen.png';
     el('c-wappen-heim').src = heim ? wTsg : wGeg;
     el('c-wappen-gast').src = heim ? wGeg : wTsg;
+    // Gegnerlogo skalieren (Konfiguration: LogoZoom), z. B. wenn das Bild viel Rand hat
+    var zoom = parseFloat(String(K.LogoZoom || '1').replace(',', '.'));
+    if (!(zoom > 0)) zoom = 1;
+    zoom = Math.max(0.5, Math.min(zoom, 3));
+    el('c-wappen-heim').style.transform = heim ? '' : 'scale(' + zoom + ')';
+    el('c-wappen-gast').style.transform = heim ? 'scale(' + zoom + ')' : '';
     el('c-wappen-heim').alt = 'Wappen ' + (heim ? tsg : geg);
     el('c-wappen-gast').alt = 'Wappen ' + (heim ? geg : tsg);
 
@@ -577,6 +588,7 @@
     var name = el('name').value.trim();
     var mail = el('email').value.trim();
     var ok   = el('marketing').checked;
+    var geb  = el('geburtsdatum').value;
 
     if (a === '' || b === '' || name === '' || mail === ''){
       meldung('Bitte Tipp, Name und E-Mail ausfüllen.');
@@ -584,6 +596,11 @@
     }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){
       meldung('Diese E-Mail-Adresse sieht nicht richtig aus. Bitte prüfe sie kurz.');
+      return;
+    }
+    var heute = new Date().toISOString().slice(0,10);
+    if (geb !== '' && (!/^\d{4}-\d{2}-\d{2}$/.test(geb) || geb > heute || geb < '1900-01-01')){
+      meldung('Das Geburtsdatum sieht nicht richtig aus. Bitte prüfe es oder lass das Feld leer.');
       return;
     }
     if (!ENDPOINT){ danke(a, b); return; }           // Vorschau ohne Verbindung
@@ -594,7 +611,8 @@
     var daten = new URLSearchParams({
       name: name, email: mail,
       toreTsg: a, toreGeg: b,
-      einwilligung: ok ? 'ja' : 'nein'
+      einwilligung: ok ? 'ja' : 'nein',
+      geburtsdatum: geb
     });
 
     fetch(ENDPOINT, { method:'POST', mode:'no-cors', body: daten })
@@ -608,6 +626,7 @@
 
   function danke(a, b){
     el('dankescore').textContent = a + ':' + b;
+    el('doi').hidden = !el('marketing').checked;
     el('formkarte').hidden = true;
     el('danke').hidden = false;
     window.scrollTo({ top:0, behavior:'smooth' });
@@ -623,6 +642,8 @@
     }
     e.textContent = text;
   }
+
+  el('geburtsdatum').max = new Date().toISOString().slice(0,10);
 
   /* ---------- Start ---------- */
   konfigLaden(anwenden);
